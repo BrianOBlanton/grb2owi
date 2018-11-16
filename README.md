@@ -57,10 +57,12 @@ f.221, f.222 in OWI format
 <span style="font-family:Courier; font-size:1em;">
 	prompt> grb2owi.sh --nlon 200 -nlan 200 -lon1 278 -lat1 22 sfc_2016100620_*.grb2
 </span>
+
 1. Convert three files explicitly named on the commandline, using defaults:   
 <span style="font-family:Courier; font-size:1em;">
 	prompt> grb2owi.sh file234.grb2 file9873.grb2 file1.grb2
 </span>
+
 1. Convert files using a non-default pressure variable:level:  
 <span style="font-family:Courier; font-size:1em;">
 	prompt> grb2owi.sh --presname="PRMSL:mean sea level" nam_2016100620_*.grb2
