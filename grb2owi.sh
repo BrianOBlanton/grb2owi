@@ -1,4 +1,6 @@
 #!/bin/bash
+#set -x
+#set -e
 
 Usage()
 {
@@ -137,7 +139,6 @@ fi
 #####  done parsing input arguments
 #####
 
-#WGRIB2="/Users/bblanton/bin/wgrib2"
 WGRIB2=`which wgrib2`
 if [ $? -eq 0 ]; then
         if [ "$VERBOSE" == true ]; then 
@@ -225,9 +226,9 @@ done
 #####
 
 cat h_main.txt > f.221
-        cat p.txt.* >> f.221
+cat p.txt.* >> f.221
 cat h_main.txt > f.222
-        cat uv.txt.* >> f.222
+cat uv.txt.* >> f.222
 
 rm *.txt.1* h_main.txt
 
