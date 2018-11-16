@@ -50,30 +50,21 @@ f.221, f.222 in OWI format
 
 ## Examples
 1. Convert files matching wildcard to OWI, using default regular grid parameters:  
-<span style="font-family:Courier; font-size:1em;">
 	 prompt> grb2owi.sh sfc_2016100620_*.grb2
-</span>
 
 2. Convert files matching wildcard to OWI, with 200 points in each direction, starting at lower-left corner == (278,22)  
-<span style="font-family:Courier; font-size:1em;">
 	prompt> grb2owi.sh --nlon 200 -nlan 200 -lon1 278 -lat1 22 sfc_2016100620_*.grb2
-</span>
 
 3. Convert three files explicitly named on the commandline, using defaults:   
-<span style="font-family:Courier; font-size:1em;">
 	prompt> grb2owi.sh file234.grb2 file9873.grb2 file1.grb2
-</span>
 
 4. Convert files using a non-default pressure variable:level:  
-<span style="font-family:Courier; font-size:1em;">
 	prompt> grb2owi.sh --presname="PRMSL:mean sea level" nam_2016100620_*.grb2
-</span>
 ##   
 
 ---
          
-Brian Blanton <Brian_Blanton@Renci.Org> `<Brian_Blanton@Renci.Org>`
-
+Brian Blanton <Brian_Blanton@Renci.Org> 
 Renaissance Computing Institute  
 Oct 2018
 
