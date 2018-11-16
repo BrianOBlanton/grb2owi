@@ -27,6 +27,7 @@ results into consolidated 221,222 files.
 	*    --vgrdname "VGRD:10 m above ground"
 
 ## Options
+```
 <span style="font-family:Courier; font-size:1em;">
  `--`ugrdname : name of e/w wind speed variable in grib file (def="UGRD:10 m above ground")  
  `--`vgrdname : name of n/s wind speed variable in grib file (def="VGRD:10 m above ground")  
@@ -38,6 +39,7 @@ results into consolidated 221,222 files.
  `--`nlat     : number of points in lat direction (def=100)  
  `--`dlat     : latitude increment for interpolation (def=.0267)  
 </span>
+```
 
 ## Outputs
 f.221, f.222 in OWI format
