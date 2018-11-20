@@ -224,10 +224,10 @@ done
 ##### build final file
 #####
 
-cat h_main.txt > f.221
-cat p.txt.* >> f.221
-cat h_main.txt > f.222
-cat uv.txt.* >> f.222
+cat h_main.txt > fort.221
+cat p.txt.* >> fort.221
+cat h_main.txt > fort.222
+cat uv.txt.* >> fort.222
 
 rm *.txt.1* h_main.txt
 
