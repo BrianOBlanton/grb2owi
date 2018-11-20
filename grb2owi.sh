@@ -79,7 +79,7 @@ if [ "$#" -eq 0 ] ; then
 fi
 
 GETOPT='getopt'
-if [[ `uname` -eq "Darwin" ]]; then 
+if [[ `uname` == "Darwin" ]]; then 
         GETOPT='/usr/local/Cellar/gnu-getopt/1.1.6/bin/getopt'
 fi
 
@@ -199,7 +199,6 @@ printf $hline "$t1" "$t2" > h_main.txt
 unset IFS
 echo "OWI Header line:"
 cat h_main.txt
-
 
 #####
 ##### build individual snap files
