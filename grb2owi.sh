@@ -83,7 +83,7 @@ if [[ `uname` == "Darwin" ]]; then
         GETOPT='/usr/local/Cellar/gnu-getopt/1.1.6/bin/getopt'
 fi
 
-OPTS=`$GETOPT -o v --long ugrdname:,vgrdname:,presname:,lon1:,nlon:,dlon:,lat1:,nlat:,dlat: -n 'parse-options' -- "$@"`
+OPTS=`$GETOPT -o v --long ugrdname:,vgrdname:,presname:,lon1:,nlon:,dlon:,lat1:,nlat:,dlat:,verbose -n 'parse-options' -- "$@"`
 
 if [ $? != 0 ]
 then
@@ -107,6 +107,7 @@ VERBOSE=false
 while true ; do
     case "$1" in
         -v) VERBOSE=true; shift;;
+        --verbose) VERBOSE=true; shift;;
         --lon1) LON1=$2; shift 2;;
         --nlon) NLON=$2; shift 2;;
         --dlon) DLON=$2; shift 2;;
@@ -223,7 +224,7 @@ done
 #####
 ##### build final file
 #####
-
+echo "Assembling final fort.22{1,2} files ..."
 cat h_main.txt > fort.221
 cat p.txt.* >> fort.221
 cat h_main.txt > fort.222
