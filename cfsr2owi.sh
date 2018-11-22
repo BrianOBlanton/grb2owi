@@ -78,7 +78,7 @@ GETOPT='getopt'
 if [[ `uname` == "Darwin" ]]; then 
         GETOPT='/usr/local/Cellar/gnu-getopt/1.1.6/bin/getopt'
 fi
-OPTS=`$GETOPT -o v,s --long startdate:,enddate:,skipdownload -n 'parse-options' -- "$@"`
+OPTS=`$GETOPT -o v,s --long startdate:,enddate:,skipdownload,presscale: -n 'parse-options' -- "$@"`
 if [ $? != 0 ]
 then
 	echo "Failed to parse commandline."
@@ -99,6 +99,7 @@ LAT1=5
 NLAT=170
 DLAT=.25
 presname="PRES:surface:anl"
+presscale="1.0"
 
 while true ; do
     case "$1" in
@@ -106,6 +107,7 @@ while true ; do
         -s) SKIPDOWNLOAD=true; shift;;
         --verbose) VERBOSE=true; shift;;
         --skipdownload) SKIPDOWNLOAD=true; shift;;
+        --presscale) presscale=$2; shift 2;;
         --startdate) startdate=$2; shift 2;;
         --enddate) enddate=$2; shift 2;;
         --lon1) LON1=$2; shift 2;;

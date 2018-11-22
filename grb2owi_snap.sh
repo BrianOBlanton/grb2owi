@@ -31,7 +31,8 @@ fi
 wgrib2 $INgrb -match "($pname|$uname|$vname)" -grib temp.grb &>/dev/null
 
 # convert p from Pa to mb
-wgrib2 temp.grb -if "$pname" -rpn "100:/" -fi -grib_out temp2.grb  &>/dev/null
+#wgrib2 temp.grb -if "$pname" -rpn "100:/" -fi -grib_out temp2.grb  &>/dev/null
+wgrib2 temp.grb -if "$pname" -rpn "0:*" -fi -grib_out temp2.grb  &>/dev/null
 
 # interp to equidistant grid
 wgrib2 temp2.grb -set_grib_type same -new_grid_winds earth -new_grid latlon $lon1:$nlon:$dlon $lat1:$nlat:$dlat   temp3.grb  &>/dev/null
