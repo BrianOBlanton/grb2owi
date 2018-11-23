@@ -82,7 +82,7 @@ GETOPT='getopt'
 if [[ `uname` == "Darwin" ]]; then 
         GETOPT='/usr/local/opt/gnu-getopt/bin/getopt'
 fi
-OPTS=`$GETOPT -o v,s --long startdate:,enddate:,skipdownload,presscale: -n 'parse-options' -- "$@"`
+OPTS=`$GETOPT -o d,s,v --long startdate:,enddate:,skipdownload,verbose,debug,zeropres: -n 'parse-options' -- "$@"`
 if [ $? != 0 ]
 then
 	echo "Failed to parse commandline."
@@ -95,27 +95,30 @@ eval set -- "$OPTS"
 startdate=$CFSR_begin_date
 enddate=$($DATE --date "$startdate + 5 days" "+%Y-%m-%d 00:00:00")
 VERBOSE=false
+DEBUG=false
 SKIPDOWNLOAD=false
+ZEROPRES=false
 LON1=261
-NLON=160
+NLON=205
 DLON=.20
 LAT1=5
-NLAT=170
+NLAT=205
 DLAT=.20
-zeropres="1.0"
 
 presname="PRES:surface:anl"
 ugrdname="UGRD:10 m above ground"
 vgrdname="VGRD:10 m above ground"
-Z2="HGT:surface:anl"
-T="TMP:2 m above ground"
-PRMSL="PRES:mean sea level;:anl"
+hgtname="HGT:surface:anl"
+tmpname="TMP:2 m above ground"
+prmslname="PRES:mean sea level:anl"
 
 while true ; do
     case "$1" in
         -v) VERBOSE=true; shift;;
         -s) SKIPDOWNLOAD=true; shift;;
+        -d) DEBUG=true; shift;;
         --verbose) VERBOSE=true; shift;;
+        --debug) DEBUG=true; shift;;
         --skipdownload) SKIPDOWNLOAD=true; shift;;
         --zeropres) presscale=$2; shift 2;;
         --startdate) startdate=$2; shift 2;;
@@ -176,36 +179,46 @@ while [ $current -le  $end_date_stamp ] ; do
 	if [ "$VERBOSE" == true ]; then 
 		echo "$url"
 	fi
+
 	# get file and mv to unique filename in time-ascending order
 	cc=`printf "%04d" $c`
+	fbase=`printf "cdas1.t%02dz.sfluxgrbf00.grib2.%04d.%02d.%02d" $hour $year $month $day`
+	f_small=`printf "%s.small.%04d" $fbase $cc `
+	f=`printf "%s.%04d" $fbase $cc`
+ 
 	if [[ "$SKIPDOWNLOAD" == "false" ]]; then
 
-		# get the grib file
-		f=`printf "cdas1.t%dz.sfluxgrbf00.grib2.%04d.%02d.%02d.$cc" $hour $year $month $day $cc`
-		curl $url > temp.grib2
+		curl $url > $f
 
 		# reduce size
-		wgrib2 temp.grib2 -match "($presname|$ugrdname|$vgrdname|$hgtname|$tempname)"  -grib temp_small.grib2
+		wgrib2 $f -match "($presname|$ugrdname|$vgrdname|$hgtname|$tmpname)"  -grib temp
 		
 		# compute PRMSL
-		wgrib2 $file -grib temp_small.grib2 \
-			-if "$T" -rpn "29.3:*:sto_1" -print "saved $T to reg1" -fi  \
-			-if "$Z2" -rpn "sto_2" -print "saved $Z2 to reg2" -fi \
-			-if "$Psurfaceanl" -rpn "sto_3" -print "saved $Psurfaceanl to reg3" -fi  \
+		wgrib2 temp -grib $f_small \
+			-if "$tmpname" -rpn "29.3:*:sto_1" -print "saved $tmpname to reg1" -fi  \
+			-if "$hgtname" -rpn "sto_2" -print "saved $hgtname to reg2" -fi \
+			-if "$presname" -rpn "sto_3" -print "saved $presname to reg3" -fi  \
 			-if_reg "1:2:3" \
-				-rpn "rcl_2:rcl_1:/:exp:rcl_3:*" -set_lev "mean sea level" -set_var PRES -grib_out $f_small
+				-rpn "rcl_2:rcl_1:/:exp:rcl_3:*" -set_var PRES -set_lev "mean sea level" -grib_out $f_small
 
 	fi
-	filelist+=("f.$cc")
+	filelist+=("$f_small")
+
+	# increment counter. Duh...
 	((c++))
+
 done
 
 # files have been downloaded.  now call grb2owi with this list as input
-args="--presname $presname --lon1 $LON1 --nlon $NLON --dlon $DLON --lat1 $LAT1 --nlat $NLAT --dlat $DLAT"
+#args="--presname $presname --lon1 $LON1 --nlon $NLON --dlon $DLON --lat1 $LAT1 --nlat $NLAT --dlat $DLAT"
+args="--lon1 $LON1 --nlon $NLON --dlon $DLON --lat1 $LAT1 --nlat $NLAT --dlat $DLAT"
 if [ "$VERBOSE" == true ]; then
 	#echo "${filelist[*]}"
 	args="--verbose $args"
 	echo $args
 fi
 grb2owi.sh $args ${filelist[*]}
+
+# clean up
+
 
