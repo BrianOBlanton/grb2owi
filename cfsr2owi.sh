@@ -3,12 +3,14 @@ set -e     # exit immediately on error
 #set -x     # verbose with command expansion
 set -u    # forces exit on undefined variables
 
+#
 # CFSR2owi builder
-
+#
 #  https://www.ncdc.noaa.gov/data-access/model-data/model-datasets/climate-forecast-system-version2-cfsv2
-
+#
 # CFSv2 Operational Analysis 6-Hourly Products
 # https://www.ncei.noaa.gov/thredds/catalog/cfs_v2_anl_6h_flxf/catalog.html
+#
 
 # specify gnu date command
 arch=`uname`
@@ -17,7 +19,6 @@ if [ "$arch" == "Darwin" ]; then
 else
 	DATE="date" 
 fi
-
 
 Usage()
 {
@@ -31,15 +32,18 @@ Nov 2018
 ENDOFMESSAGE
 }
 
-date2stamp () {
+date2stamp ()
+{
     $DATE --utc --date "$1" +%s
 }
 
-stamp2date (){
+stamp2date ()
+{
     $DATE --utc --date "1970-01-01 $1 sec" "+%Y-%m-%d %T"
 }
 
-dateDiff (){
+dateDiff ()
+{
     case $1 in
         -s)   sec=1;      shift;;
         -m)   sec=60;     shift;;
@@ -76,7 +80,7 @@ echo "Time interval set to $time_inc secs"
 # process command line args
 GETOPT='getopt'
 if [[ `uname` == "Darwin" ]]; then 
-        GETOPT='/usr/local/Cellar/gnu-getopt/1.1.6/bin/getopt'
+        GETOPT='/usr/local/opt/gnu-getopt/bin/getopt'
 fi
 OPTS=`$GETOPT -o v,s --long startdate:,enddate:,skipdownload,presscale: -n 'parse-options' -- "$@"`
 if [ $? != 0 ]
@@ -94,12 +98,18 @@ VERBOSE=false
 SKIPDOWNLOAD=false
 LON1=261
 NLON=160
-DLON=.25
+DLON=.20
 LAT1=5
 NLAT=170
-DLAT=.25
+DLAT=.20
+zeropres="1.0"
+
 presname="PRES:surface:anl"
-presscale="1.0"
+ugrdname="UGRD:10 m above ground"
+vgrdname="VGRD:10 m above ground"
+Z2="HGT:surface:anl"
+T="TMP:2 m above ground"
+PRMSL="PRES:mean sea level;:anl"
 
 while true ; do
     case "$1" in
@@ -107,7 +117,7 @@ while true ; do
         -s) SKIPDOWNLOAD=true; shift;;
         --verbose) VERBOSE=true; shift;;
         --skipdownload) SKIPDOWNLOAD=true; shift;;
-        --presscale) presscale=$2; shift 2;;
+        --zeropres) presscale=$2; shift 2;;
         --startdate) startdate=$2; shift 2;;
         --enddate) enddate=$2; shift 2;;
         --lon1) LON1=$2; shift 2;;
@@ -169,7 +179,22 @@ while [ $current -le  $end_date_stamp ] ; do
 	# get file and mv to unique filename in time-ascending order
 	cc=`printf "%04d" $c`
 	if [[ "$SKIPDOWNLOAD" == "false" ]]; then
-		curl $url > f.$cc
+
+		# get the grib file
+		f=`printf "cdas1.t%dz.sfluxgrbf00.grib2.%04d.%02d.%02d.$cc" $hour $year $month $day $cc`
+		curl $url > temp.grib2
+
+		# reduce size
+		wgrib2 temp.grib2 -match "($presname|$ugrdname|$vgrdname|$hgtname|$tempname)"  -grib temp_small.grib2
+		
+		# compute PRMSL
+		wgrib2 $file -grib temp_small.grib2 \
+			-if "$T" -rpn "29.3:*:sto_1" -print "saved $T to reg1" -fi  \
+			-if "$Z2" -rpn "sto_2" -print "saved $Z2 to reg2" -fi \
+			-if "$Psurfaceanl" -rpn "sto_3" -print "saved $Psurfaceanl to reg3" -fi  \
+			-if_reg "1:2:3" \
+				-rpn "rcl_2:rcl_1:/:exp:rcl_3:*" -set_lev "mean sea level" -set_var PRES -grib_out $f_small
+
 	fi
 	filelist+=("f.$cc")
 	((c++))

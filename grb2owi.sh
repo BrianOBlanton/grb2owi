@@ -46,9 +46,9 @@ Outputs:
         f.221, f.222 in OWI format
 
 Notes:
-        *) the grib interpolation process will convert longitudes to negative-west 
+        *) The grib interpolation process will convert longitudes to negative-west 
           	convention if lon1 > 0
-        *) user should use wgrib2 to investigate grib grid so appropriately set 
+        *) User should use wgrib2 to investigate grib grid so appropriately set 
          	equidistant grid parameters
 
 Examples:
