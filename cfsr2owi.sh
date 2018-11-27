@@ -99,10 +99,10 @@ DEBUG=false
 SKIPDOWNLOAD=false
 ZEROPRES=false
 LON1=261
-NLON=205
+NLON=250
 DLON=.20
 LAT1=5
-NLAT=205
+NLAT=210
 DLAT=.20
 
 presname="PRES:surface:anl"
@@ -182,9 +182,9 @@ while [ $current -le  $end_date_stamp ] ; do
 
 	# get file and mv to unique filename in time-ascending order
 	cc=`printf "%04d" $c`
-	fbase=`printf "cdas1.t%02dz.sfluxgrbf00.grib2.%04d.%02d.%02d" $hour $year $month $day`
-	f_small=`printf "%s.small.%04d" $fbase $cc `
-	f=`printf "%s.%04d" $fbase $cc`
+	fbase=`printf "cdas1.t%02dz.sfluxgrbf00.grib2.%04d.%02d.%02d" ${hour#0} ${year#0} ${month#0} ${day#0} `   # "${a#0}" 
+	f_small=`printf "%s.small.%s" $fbase $cc `
+	f=`printf "%s.%s" $fbase $cc`
  
 	if [[ "$SKIPDOWNLOAD" == "false" ]]; then
 
@@ -195,8 +195,8 @@ while [ $current -le  $end_date_stamp ] ; do
 		
 		# compute PRMSL
 		wgrib2 temp -grib $f_small \
-			-if "$tmpname" -rpn "29.3:*:sto_1" -print "saved $tmpname to reg1" -fi  \
-			-if "$hgtname" -rpn "sto_2" -print "saved $hgtname to reg2" -fi \
+			-if "$tmpname"  -rpn "29.3:*:sto_1" -print "saved $tmpname to reg1" -fi  \
+			-if "$hgtname"  -rpn "sto_2" -print "saved $hgtname to reg2" -fi \
 			-if "$presname" -rpn "sto_3" -print "saved $presname to reg3" -fi  \
 			-if_reg "1:2:3" \
 				-rpn "rcl_2:rcl_1:/:exp:rcl_3:*" -set_var PRES -set_lev "mean sea level" -grib_out $f_small
