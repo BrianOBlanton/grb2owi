@@ -94,10 +94,10 @@ eval set -- "$OPTS"
 # set defaults
 startdate=$CFSR_begin_date
 enddate=$($DATE --date "$startdate + 5 days" "+%Y-%m-%d 00:00:00")
-VERBOSE=false
-DEBUG=false
-SKIPDOWNLOAD=false
-ZEROPRES=false
+VERBOSE="false"
+DEBUG="false"
+SKIPDOWNLOAD="false"
+ZEROPRES="false"
 LON1=261
 NLON=250
 DLON=.20
@@ -143,8 +143,14 @@ fi
 
 start_date_stamp=$(date2stamp "$startdate")
 end_date_stamp=$(date2stamp "$enddate")
+if [ $start_date_stamp -ge  $end_date_stamp ] ; then
+	echo "start date must **PRECEED** end date."
+	echo "startdate=$startdate"
+	echo "enddate=$enddate"
+	exit 1
+fi
 
-if [ "$VERBOSE" == true ]; then 
+if [ "$VERBOSE" == "true" ]; then 
 	echo "Updated args:"
 	echo "   start=$startdate"
 	echo "   end=$enddate"
@@ -177,8 +183,9 @@ while [ $current -le  $end_date_stamp ] ; do
 
 	if [ "$VERBOSE" == "true" ]; then 
 		echo "$current ($end_date_stamp) $d $year $month $day $hour"
+		t=`echo "$current < $end_date_stamp" | bc`
+		echo "current time less than end time? " $t
 	fi
-	current=$(( $current+$time_inc ))
 	
 	url=`echo $mainUrl | sed "s/<year>/\$year/g"`
 	url=`echo $url | sed "s/<month>/\$month/g"`
@@ -213,7 +220,8 @@ while [ $current -le  $end_date_stamp ] ; do
         
 	filelist+=("$f_small")
 
-	# increment counter. Duh...
+	# increment 
+	current=$(( $current + $time_inc ))
 	((c++))
         echo "here:$c"
 
@@ -222,7 +230,7 @@ done
 # files have been downloaded.  now call grb2owi with this list as input
 #args="--presname $presname --lon1 $LON1 --nlon $NLON --dlon $DLON --lat1 $LAT1 --nlat $NLAT --dlat $DLAT"
 args="--lon1 $LON1 --nlon $NLON --dlon $DLON --lat1 $LAT1 --nlat $NLAT --dlat $DLAT"
-if [ "$VERBOSE" == true ]; then
+if [ "$VERBOSE" == "true" ]; then
 	#echo "${filelist[*]}"
 	args="--verbose $args"
 	echo $args
