@@ -60,6 +60,12 @@ f.221, f.222 in OWI format
 
 4. Convert files using a non-default pressure variable:level:  
 	prompt> grb2owi.sh --presname="PRMSL:mean sea level" nam_2016100620_*.grb2
+
+5. retrieve CFSR grib2 files and map to an OWI grid.  Note that global CFSR files are on a gaussian T574 grid.  Fortunately, wgrib2 can move between NCEP grids easily.
+        prompt> sh cfsr2owi.sh --startdate "2015-01-01" --enddate "2015-02-15
+5b. If you want to reprocess the grib2 files into OWI, perhaps you want to change the spatial resolution and have NOT deleted the cdas files, then pass cfsr2owi.sh the skipdownload argument:
+        prompt> sh cfsr2owi.sh --skipdownload --startdate "2015-01-01" --enddate "2015-02-15
+
 ##   
 
 ---

@@ -216,7 +216,7 @@ do
         	echo "$LON1 $NLON $DLON $LAT1 $NLAT $DLAT $f $presname $ugrdname $vgrdname"
         	exit 1
         fi
-		mv p.txt p.txt.$c
+	mv p.txt p.txt.$c
         mv uv.txt uv.txt.$c
         let "c++" 
 done

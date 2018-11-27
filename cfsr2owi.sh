@@ -23,7 +23,7 @@ fi
 Usage()
 {
 cat  <<-ENDOFMESSAGE
-Usage: cfsr2owi.sh --startdate "<startdate>" --enddate "<enddate>" --skipdownload
+Usage: cfsr2owi.sh --startdate "<startdate>" --enddate "<enddate>" [--skipdownload --verbose --debug --zeropres]
 
 Brian Blanton
 Renaissance Computing Institute			
@@ -136,6 +136,11 @@ while true ; do
     esac
 done
 
+if [ "$DEBUG" == true ]; then 
+        set -x
+fi
+
+
 start_date_stamp=$(date2stamp "$startdate")
 end_date_stamp=$(date2stamp "$enddate")
 
@@ -161,14 +166,17 @@ fi
 current="$start_date_stamp"
 c=0
 filelist=()
+
 while [ $current -le  $end_date_stamp ] ; do
+
 	d=$(stamp2date "$current")
 	year=${d:0:4}
 	month=${d:5:2}
 	day=${d:8:2}
 	hour=${d:11:2}
-	if [ "$VERBOSE" == true ]; then 
-		echo "$current $d $year $month $day $hour"
+
+	if [ "$VERBOSE" == "true" ]; then 
+		echo "$current ($end_date_stamp) $d $year $month $day $hour"
 	fi
 	current=$(( $current+$time_inc ))
 	
@@ -176,7 +184,7 @@ while [ $current -le  $end_date_stamp ] ; do
 	url=`echo $url | sed "s/<month>/\$month/g"`
 	url=`echo $url | sed "s/<day>/\$day/g"`
 	url=`echo $url | sed "s/<hour>/\$hour/g"`
-	if [ "$VERBOSE" == true ]; then 
+	if [ "$VERBOSE" == "true" ]; then 
 		echo "$url"
 	fi
 
@@ -202,10 +210,12 @@ while [ $current -le  $end_date_stamp ] ; do
 				-rpn "rcl_2:rcl_1:/:exp:rcl_3:*" -set_var PRES -set_lev "mean sea level" -grib_out $f_small
 
 	fi
+        
 	filelist+=("$f_small")
 
 	# increment counter. Duh...
 	((c++))
+        echo "here:$c"
 
 done
 
