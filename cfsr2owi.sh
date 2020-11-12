@@ -76,7 +76,6 @@ echo "   $CFSR_end_date $CFSR_end_date_stamp"
 time_inc=$(date2stamp "1970-01-01 06:00:00") # 6-hr in secs, past epoch
 echo "Time interval set to $time_inc secs"
 
-
 # process command line args
 GETOPT='getopt'
 if [[ `uname` == "Darwin" ]]; then 
@@ -136,10 +135,9 @@ while true ; do
     esac
 done
 
-if [ "$DEBUG" == true ]; then 
+if [ "$DEBUG" == "true" ]; then 
         set -x
 fi
-
 
 start_date_stamp=$(date2stamp "$startdate")
 end_date_stamp=$(date2stamp "$enddate")
@@ -155,6 +153,9 @@ if [ "$VERBOSE" == "true" ]; then
 	echo "   start=$startdate"
 	echo "   end=$enddate"
 	echo "   skipdownload=$SKIPDOWNLOAD"
+	echo "   verbose=$VERBOSE"
+	echo "   debug=$DEBUG"
+	echo "   DATE command=$DATE"
 	lon1n=$(echo "$LON1-360" | bc)
 	echo "   LON1=$LON1 ($lon1n)" 
 	echo "   NLON=$NLON"
