@@ -9,7 +9,7 @@ set -u    # forces exit on undefined variables
 #  https://www.ncdc.noaa.gov/data-access/model-data/model-datasets/climate-forecast-system-version2-cfsv2
 #
 # CFSv2 Operational Analysis 6-Hourly Products
-# https://www.ncei.noaa.gov/thredds/catalog/cfs_v2_anl_6h_flxf/catalog.html
+# https://www.ncei.noaa.gov/thredds/catalog/model-cfs_v2_anl_6h_flxf/catalog.html
 #
 
 # specify gnu date command
@@ -63,35 +63,27 @@ if [ "$#" -eq 0 ] ; then
         exit 0
 fi
 
-# specify CFSR times
+echo "**********************************************"
+echo "*                                            *"
+echo "* CFSv2 to OWI converter                     *"
+echo "* Version 1.0                                *" 
+echo "* mainUrl=https://www.ncei.noaa.gov/thredds/\\*"
+echo "*       fileServer/model-cfs_v2_anl_6h_flxf/ *"
+echo "*                                            *"
+echo "**********************************************"
+
+# main NCEI URL 
 #mainUrl='https://www.ncei.noaa.gov/thredds/dodsC/cfs_v2_anl_6h_flxf/<year>/<year><month>/<year><month><day>/cdas1.t<hour>z.sfluxgrbf00.grib2'
 #mainUrl='https://www.ncei.noaa.gov/thredds/fileServer/cfs_v2_anl_6h_flxf/<year>/<year><month>/<year><month><day>/cdas1.t<hour>z.sfluxgrbf00.grib2'
 mainUrl='https://www.ncei.noaa.gov/thredds/fileServer/model-cfs_v2_anl_6h_flxf/<year>/<year><month>/<year><month><day>/cdas1.t<hour>z.sfluxgrbf00.grib2'
-CFSR_begin_date="2017-12-01 00:00:00"
+
+#set defaults
+CFSR_begin_date=$($DATE --date "now" "+%Y-%m-%d 00:00:00")
 CFSR_end_date=$($DATE --date "now -15 days" "+%Y-%m-%d 00:00:00")
 CFSR_begin_date_stamp=$(date2stamp "$CFSR_begin_date")
 CFSR_end_date_stamp=$(date2stamp "$CFSR_end_date")
 time_inc=$(date2stamp "1970-01-01 06:00:00") # 6-hr in secs, past epoch
-#echo "CFS V2 start and end dates:"
-#echo "   $CFSR_begin_date $CFSR_begin_date_stamp"
-#echo "   $CFSR_end_date $CFSR_end_date_stamp"
-#echo "Time interval set to $time_inc secs"
 
-# process command line args
-GETOPT='getopt'
-if [[ `uname` == "Darwin" ]]; then 
-        GETOPT='/usr/local/opt/gnu-getopt/bin/getopt'
-fi
-OPTS=`$GETOPT -o d,s,v --long startdate:,enddate:,skipdownload,verbose,debug,zeropres: -n 'parse-options' -- "$@"`
-if [ $? != 0 ]
-then
-	echo "Failed to parse commandline."
-	Usage
-	exit 1
-fi
-eval set -- "$OPTS"
-
-# set defaults
 startdate=$CFSR_begin_date
 enddate=$($DATE --date "$startdate + 5 days" "+%Y-%m-%d 00:00:00")
 VERBOSE="false"
@@ -111,6 +103,20 @@ vgrdname="VGRD:10 m above ground"
 hgtname="HGT:surface:anl"
 tmpname="TMP:2 m above ground"
 prmslname="PRES:mean sea level:anl"
+
+# process command line args
+GETOPT='getopt'
+if [[ `uname` == "Darwin" ]]; then 
+        GETOPT='/usr/local/opt/gnu-getopt/bin/getopt'
+fi
+OPTS=`$GETOPT -o d,s,v --long startdate:,enddate:,skipdownload,verbose,debug,zeropres: -n 'parse-options' -- "$@"`
+if [ $? != 0 ]
+then
+	echo "Failed to parse commandline."
+	Usage
+	exit 1
+fi
+eval set -- "$OPTS"
 
 while true ; do
     case "$1" in
@@ -136,6 +142,31 @@ while true ; do
     esac
 done
 
+lon1n=$(echo "$LON1-360" | bc)
+LON2=`echo "$LON1 + $NLON * $DLON" | bc -l`
+lon2n=$(echo "$LON2-360" | bc)
+LAT2=`echo "$LAT1 + $NLAT * $DLAT" | bc -l`
+
+#if [ "$VERBOSE" == "true" ]; then 
+	echo "* Final args:"
+	echo "*    CFSv2 start = $startdate"
+	echo "*    CFSv2 end   = $enddate"
+        echo "*    Time interval $time_inc secs"
+	echo "*    skipdownload=$SKIPDOWNLOAD"
+	echo "*    verbose=$VERBOSE"
+	echo "*    debug=$DEBUG"
+	echo "*    DATE command=$DATE"
+	echo "*    LON1=$LON1 ($lon1n)" 
+	echo "*    NLON=$NLON"
+	echo "*    DLON=$DLON"
+	echo "*    LON2=$LON2 ($lon2n) "   
+	echo "*    LAT1=$LAT1" 
+	echo "*    NLAT=$NLAT"
+	echo "*    DLAT=$DLAT"
+	echo "*    LAT2=$LAT2 " 
+        echo "*                                            *"
+        echo "**********************************************"
+#fi
 if [ "$DEBUG" == "true" ]; then 
         set -x
 fi
@@ -149,36 +180,9 @@ if [ $start_date_stamp -ge  $end_date_stamp ] ; then
 	exit 1
 fi
 
-if [ "$VERBOSE" == "true" ]; then 
-	echo "Updated args:"
-	echo "   start=$startdate"
-	echo "   end=$enddate"
-	echo "   skipdownload=$SKIPDOWNLOAD"
-	echo "   verbose=$VERBOSE"
-	echo "   debug=$DEBUG"
-	echo "   DATE command=$DATE"
-	lon1n=$(echo "$LON1-360" | bc)
-	echo "   LON1=$LON1 ($lon1n)" 
-	echo "   NLON=$NLON"
-	echo "   DLON=$DLON"
-	LON2=`echo "$LON1 + $NLON * $DLON" | bc -l`
-	lon2n=$(echo "$LON2-360" | bc)
-	echo "      LON2=$LON2 ($lon2n) "   
-	echo "   LAT1=$LAT1" 
-	echo "   NLAT=$NLAT"
-	echo "   DLAT=$DLAT"
-	LAT2=`echo "$LAT1 + $NLAT * $DLAT" | bc -l`
-	echo "      LAT2=$LAT2 " 
-fi
-
 current="$start_date_stamp"
 c=0
 filelist=()
-
-echo "CFS V2 start and end dates:"
-echo "   $startdate $start_date_stamp"
-echo "   $enddate $end_date_stamp"
-echo "Time interval set to $time_inc secs"
 
 while [ $current -le  $end_date_stamp ] ; do
 
@@ -188,32 +192,29 @@ while [ $current -le  $end_date_stamp ] ; do
 	day=${d:8:2}
 	hour=${d:11:2}
 
-	echo "Processing $current ($end_date_stamp) $d $year $month $day $hour"
-	#if [ "$VERBOSE" == "true" ]; then 
-	#	echo "$current ($end_date_stamp) $d $year $month $day $hour"
-	#	t=`echo "$current < $end_date_stamp" | bc`
-	#	echo "current time less than end time? " $t
-	#fi
-	
+        echo "Processing $d $year $month $day $hour (epoch time=$current)"
+
 	url=`echo $mainUrl | sed "s/<year>/\$year/g"`
 	url=`echo $url | sed "s/<month>/\$month/g"`
 	url=`echo $url | sed "s/<day>/\$day/g"`
 	url=`echo $url | sed "s/<hour>/\$hour/g"`
-	if [ "$VERBOSE" == "true" ]; then 
-		echo "   +++ $url"
-	fi
 
 	# get file and mv to unique filename in time-ascending order
 	cc=`printf "%04d" $c`
 	fbase=`printf "cdas1.t%02dz.sfluxgrbf00.grib2.%04d.%02d.%02d" ${hour#0} ${year#0} ${month#0} ${day#0} `   # "${a#0}" 
 	f_small=`printf "%s.small.%s" $fbase $cc `
 	f=`printf "%s.%s" $fbase $cc`
- 
+
+	#if [ "$VERBOSE" == "true" ]; then 
+		echo "   +++ Retrieving $f"
+	#fi
+
 	if [[ "$SKIPDOWNLOAD" == "false" ]]; then
-		curl $url > $f
+
+		curl $url --output $f  > curl.log 2>&1 
 
 		# reduce size
-		wgrib2 $f -match "($presname|$ugrdname|$vgrdname|$hgtname|$tmpname)"  -grib temp
+		wgrib2 $f -match "($presname|$ugrdname|$vgrdname|$hgtname|$tmpname)"  -grib temp > /dev/null 2>&1
 		
 		# compute PRMSL
 		wgrib2 temp -grib $f_small \
@@ -221,7 +222,7 @@ while [ $current -le  $end_date_stamp ] ; do
 			-if "$hgtname"  -rpn "sto_2" -print "saved $hgtname to reg2" -fi \
 			-if "$presname" -rpn "sto_3" -print "saved $presname to reg3" -fi  \
 			-if_reg "1:2:3" \
-				-rpn "rcl_2:rcl_1:/:exp:rcl_3:*" -set_var PRES -set_lev "mean sea level" -grib_out $f_small
+				-rpn "rcl_2:rcl_1:/:exp:rcl_3:*" -set_var PRES -set_lev "mean sea level" -grib_out $f_small  > /dev/null 2>&1
         else
                 echo Skipping download.  Only building filelist...
 	fi
@@ -229,26 +230,21 @@ while [ $current -le  $end_date_stamp ] ; do
 	filelist+=("$f_small")
 
 	# increment 
-#echo "hereABC, $current, $c"
 	current=$(( $current + $time_inc ))
-#echo "hereIJK, $current, $c"
 	c=$((c+1)) # ((c++))
-#echo "hereXYZ, $current, $c"
-
-        #echo "here:$c"
 done
 
 # files have been downloaded.  now call grb2owi with this list as input
 #args="--presname $presname --lon1 $LON1 --nlon $NLON --dlon $DLON --lat1 $LAT1 --nlat $NLAT --dlat $DLAT"
 args="--lon1 $LON1 --nlon $NLON --dlon $DLON --lat1 $LAT1 --nlat $NLAT --dlat $DLAT"
+echo Sending file list to grb2owi.sh
 if [ "$VERBOSE" == "true" ]; then
-	#echo "${filelist[*]}"
 	args="--verbose $args"
 	echo $args
+        echo "${filelist[*]}"
 fi
-echo Sending file list to grb2owi.sh
-echo "${filelist[*]}"
 
+echo " " 
 sh grb2owi.sh $args ${filelist[*]}
 
 # clean up

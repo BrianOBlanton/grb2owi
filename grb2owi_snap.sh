@@ -18,6 +18,7 @@ else
         echo "Usage: grb2owi_snap.sh lon1 nlon dlon lat1 nlat dlat grib2file presname uname vname"
         exit 1
 fi
+WGRIB2=`which wgrib2`
 
 # test lon1 for >0, sub 360 if so (assumes western hemis).
 if (( $(bc <<< "$lon1 > 0") ))
@@ -30,26 +31,22 @@ fi
 #echo lon="$lon1:$nlon:$dlon" lat="$lat1:$nlat:$dlat" 
 
 # reduce to uvp
-wgrib2 $INgrb -match "($pname|$uname|$vname)" -grib temp.grb &>/dev/null
-#echo "here1: temp.grb"
+wgrib2 $INgrb -match "($pname|$uname|$vname)" -grib temp.grb > /dev/null 2>&1  
 
 # convert p from Pa to mb
-wgrib2 temp.grb -if "$pname" -rpn "100:/" -fi -grib_out temp2.grb  &>/dev/null
+wgrib2 temp.grb -if "$pname" -rpn "100:/" -fi -grib_out temp2.grb > /dev/null 2>&1 
 # wgrib2 temp.grb -if "$pname" -rpn "0:*" -fi -grib_out temp2.grb  # &>/dev/null
-#echo "here2: temp2.grb "
-#exit
 
 # interp to equidistant grid
-wgrib2 temp2.grb -set_grib_type same -new_grid_winds earth -new_grid latlon $lon1:$nlon:$dlon $lat1:$nlat:$dlat   temp3.grb  # &>/dev/null
+wgrib2 temp2.grb -set_grib_type same -new_grid_winds earth -new_grid latlon $lon1:$nlon:$dlon $lat1:$nlat:$dlat   temp3.grb  > /dev/null 2>&1
 #wgrib2 temp3.grb -gridout ll.dat
 
 # time interpolation
 # http://www.cpc.ncep.noaa.gov/products/wesley/wgrib2/time_interpolation.html
-wgrib2 temp3.grb -match "$pname" -no_header -text_fmt '%9.4f' -text_col 8 -text p.txt &>/dev/null
-wgrib2 temp3.grb -match "$uname" -no_header -text_fmt '%9.4f' -text_col 8 -text u.txt &>/dev/null
-wgrib2 temp3.grb -match "$vname" -no_header -text_fmt '%9.4f' -text_col 8 -text v.txt &>/dev/null
+wgrib2 temp3.grb -match "$pname" -no_header -text_fmt '%9.4f' -text_col 8 -text p.txt > /dev/null
+wgrib2 temp3.grb -match "$uname" -no_header -text_fmt '%9.4f' -text_col 8 -text u.txt > /dev/null
+wgrib2 temp3.grb -match "$vname" -no_header -text_fmt '%9.4f' -text_col 8 -text v.txt > /dev/null
 #echo "here3: p.txt "
-#exit
 
 # add eol just in case the last line has fewer than 8 columns
 sed -i -e '$a\' p.txt

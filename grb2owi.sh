@@ -155,14 +155,16 @@ fi
 FirstFile=$1
 nfiles="$#"
 echo "$nfiles grb2 files to process.  Go get coffee..."
+echo " " 
 
 if [ $nfiles -lt 2 ]; then
         LastFile=$FirstFile
 else
         LastFile=${!nfiles}
 fi
-echo FirstFile=$FirstFile
-echo LastFile =$LastFile
+echo "FirstFile=$FirstFile"
+echo "LastFile =$LastFile"
+echo " " 
 
 #####
 ##### Check for variables in first grib file
@@ -201,6 +203,7 @@ printf $hline "$t1" "$t2" > h_main.txt
 unset IFS
 echo "OWI Header line:"
 cat h_main.txt
+echo " " 
 
 #####
 ##### build individual snap files
@@ -210,16 +213,18 @@ let c=10000
 for f in "$@"
 do
         dd=`$WGRIB2  -d 1 -end_FT  $f |awk 'BEGIN { FS = "=" } ; { print $2 }' `
-        echo "XYZ: Processing $f @ $dd ..."
+        echo "Processing $f @ $dd ..."
         com="sh grb2owi_snap.sh $LON1 $NLON $DLON $LAT1 $NLAT $DLAT $f \"$presname\" \"$ugrdname\" \"$vgrdname\""
-        echo "$com"
-        sh grb2owi_snap.sh $LON1 $NLON $DLON $LAT1 $NLAT $DLAT $f "$presname" "$ugrdname" "$vgrdname"
-
+        if [ "$VERBOSE" == true ]; then 
+                echo "$com"
+        fi
+        sh grb2owi_snap.sh $LON1 $NLON $DLON $LAT1 $NLAT $DLAT $f "$presname" "$ugrdname" "$vgrdname"   
         if [ $? != 0 ]; then
         	echo grb2owi_snap.sh  failed with these parameters:
         	echo "$LON1 $NLON $DLON $LAT1 $NLAT $DLAT $f $presname $ugrdname $vgrdname"
         	exit 1
         fi
+
 	mv p.txt p.txt.$c
         mv uv.txt uv.txt.$c
         let "c++" 
