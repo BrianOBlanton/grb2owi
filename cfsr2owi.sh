@@ -65,16 +65,17 @@ fi
 
 # specify CFSR times
 #mainUrl='https://www.ncei.noaa.gov/thredds/dodsC/cfs_v2_anl_6h_flxf/<year>/<year><month>/<year><month><day>/cdas1.t<hour>z.sfluxgrbf00.grib2'
-mainUrl='https://www.ncei.noaa.gov/thredds/fileServer/cfs_v2_anl_6h_flxf/<year>/<year><month>/<year><month><day>/cdas1.t<hour>z.sfluxgrbf00.grib2'
-CFSR_begin_date="2011-04-01 00:00:00"
+#mainUrl='https://www.ncei.noaa.gov/thredds/fileServer/cfs_v2_anl_6h_flxf/<year>/<year><month>/<year><month><day>/cdas1.t<hour>z.sfluxgrbf00.grib2'
+mainUrl='https://www.ncei.noaa.gov/thredds/fileServer/model-cfs_v2_anl_6h_flxf/<year>/<year><month>/<year><month><day>/cdas1.t<hour>z.sfluxgrbf00.grib2'
+CFSR_begin_date="2017-12-01 00:00:00"
 CFSR_end_date=$($DATE --date "now -15 days" "+%Y-%m-%d 00:00:00")
 CFSR_begin_date_stamp=$(date2stamp "$CFSR_begin_date")
 CFSR_end_date_stamp=$(date2stamp "$CFSR_end_date")
-echo "CFS V2 start and end dates:"
-echo "   $CFSR_begin_date $CFSR_begin_date_stamp"
-echo "   $CFSR_end_date $CFSR_end_date_stamp"
 time_inc=$(date2stamp "1970-01-01 06:00:00") # 6-hr in secs, past epoch
-echo "Time interval set to $time_inc secs"
+#echo "CFS V2 start and end dates:"
+#echo "   $CFSR_begin_date $CFSR_begin_date_stamp"
+#echo "   $CFSR_end_date $CFSR_end_date_stamp"
+#echo "Time interval set to $time_inc secs"
 
 # process command line args
 GETOPT='getopt'
@@ -98,11 +99,11 @@ DEBUG="false"
 SKIPDOWNLOAD="false"
 ZEROPRES="false"
 LON1=261
-NLON=250
-DLON=.20
+NLON=197
+DLON=.25
 LAT1=5
-NLAT=210
-DLAT=.20
+NLAT=181
+DLAT=.25
 
 presname="PRES:surface:anl"
 ugrdname="UGRD:10 m above ground"
@@ -174,6 +175,11 @@ current="$start_date_stamp"
 c=0
 filelist=()
 
+echo "CFS V2 start and end dates:"
+echo "   $startdate $start_date_stamp"
+echo "   $enddate $end_date_stamp"
+echo "Time interval set to $time_inc secs"
+
 while [ $current -le  $end_date_stamp ] ; do
 
 	d=$(stamp2date "$current")
@@ -182,18 +188,19 @@ while [ $current -le  $end_date_stamp ] ; do
 	day=${d:8:2}
 	hour=${d:11:2}
 
-	if [ "$VERBOSE" == "true" ]; then 
-		echo "$current ($end_date_stamp) $d $year $month $day $hour"
-		t=`echo "$current < $end_date_stamp" | bc`
-		echo "current time less than end time? " $t
-	fi
+	echo "Processing $current ($end_date_stamp) $d $year $month $day $hour"
+	#if [ "$VERBOSE" == "true" ]; then 
+	#	echo "$current ($end_date_stamp) $d $year $month $day $hour"
+	#	t=`echo "$current < $end_date_stamp" | bc`
+	#	echo "current time less than end time? " $t
+	#fi
 	
 	url=`echo $mainUrl | sed "s/<year>/\$year/g"`
 	url=`echo $url | sed "s/<month>/\$month/g"`
 	url=`echo $url | sed "s/<day>/\$day/g"`
 	url=`echo $url | sed "s/<hour>/\$hour/g"`
 	if [ "$VERBOSE" == "true" ]; then 
-		echo "$url"
+		echo "   +++ $url"
 	fi
 
 	# get file and mv to unique filename in time-ascending order
@@ -203,7 +210,6 @@ while [ $current -le  $end_date_stamp ] ; do
 	f=`printf "%s.%s" $fbase $cc`
  
 	if [[ "$SKIPDOWNLOAD" == "false" ]]; then
-
 		curl $url > $f
 
 		# reduce size
@@ -216,16 +222,20 @@ while [ $current -le  $end_date_stamp ] ; do
 			-if "$presname" -rpn "sto_3" -print "saved $presname to reg3" -fi  \
 			-if_reg "1:2:3" \
 				-rpn "rcl_2:rcl_1:/:exp:rcl_3:*" -set_var PRES -set_lev "mean sea level" -grib_out $f_small
-
+        else
+                echo Skipping download.  Only building filelist...
 	fi
         
 	filelist+=("$f_small")
 
 	# increment 
+#echo "hereABC, $current, $c"
 	current=$(( $current + $time_inc ))
-	((c++))
-        echo "here:$c"
+#echo "hereIJK, $current, $c"
+	c=$((c+1)) # ((c++))
+#echo "hereXYZ, $current, $c"
 
+        #echo "here:$c"
 done
 
 # files have been downloaded.  now call grb2owi with this list as input
@@ -236,8 +246,10 @@ if [ "$VERBOSE" == "true" ]; then
 	args="--verbose $args"
 	echo $args
 fi
-grb2owi.sh $args ${filelist[*]}
+echo Sending file list to grb2owi.sh
+echo "${filelist[*]}"
+
+sh grb2owi.sh $args ${filelist[*]}
 
 # clean up
-
 

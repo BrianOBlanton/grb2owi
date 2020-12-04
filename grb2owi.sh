@@ -1,6 +1,7 @@
 #!/bin/bash
 #set -x
-#set -e
+set -e
+set -u    # forces exit on undefined variables
 
 Usage()
 {
@@ -80,7 +81,8 @@ fi
 
 GETOPT='getopt'
 if [[ `uname` == "Darwin" ]]; then 
-        GETOPT='/usr/local/Cellar/gnu-getopt/1.1.6/bin/getopt'
+        #GETOPT='/usr/local/Cellar/gnu-getopt/1.1.6/bin/getopt'
+        GETOPT='/usr/local/opt/gnu-getopt/bin/getopt'
 fi
 
 OPTS=`$GETOPT -o v --long ugrdname:,vgrdname:,presname:,lon1:,nlon:,dlon:,lat1:,nlat:,dlat:,verbose -n 'parse-options' -- "$@"`
@@ -162,7 +164,6 @@ fi
 echo FirstFile=$FirstFile
 echo LastFile =$LastFile
 
-
 #####
 ##### Check for variables in first grib file
 #####
@@ -209,8 +210,11 @@ let c=10000
 for f in "$@"
 do
         dd=`$WGRIB2  -d 1 -end_FT  $f |awk 'BEGIN { FS = "=" } ; { print $2 }' `
-        echo "Processing $f @ $dd ..."
+        echo "XYZ: Processing $f @ $dd ..."
+        com="sh grb2owi_snap.sh $LON1 $NLON $DLON $LAT1 $NLAT $DLAT $f \"$presname\" \"$ugrdname\" \"$vgrdname\""
+        echo "$com"
         sh grb2owi_snap.sh $LON1 $NLON $DLON $LAT1 $NLAT $DLAT $f "$presname" "$ugrdname" "$vgrdname"
+
         if [ $? != 0 ]; then
         	echo grb2owi_snap.sh  failed with these parameters:
         	echo "$LON1 $NLON $DLON $LAT1 $NLAT $DLAT $f $presname $ugrdname $vgrdname"
@@ -219,6 +223,7 @@ do
 	mv p.txt p.txt.$c
         mv uv.txt uv.txt.$c
         let "c++" 
+
 done
 
 #####
